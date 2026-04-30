@@ -1,0 +1,16 @@
+{
+	"name": "example-basic",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"example": "tsx src/index.ts"
+	},
+	"dependencies": {
+		"pi-trace": "*"
+	},
+	"devDependencies": {
+		"@mariozechner/pi-ai": "^0.70.5",
+		"@mariozechner/pi-agent-core": "^0.70.5",
+		"tsx": "^4.19.0"
+	}
+}
