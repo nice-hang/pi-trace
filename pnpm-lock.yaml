@@ -10,7 +10,7 @@ importers:
 
   examples/basic:
     dependencies:
-      pi-trace:
+      pi-tracing:
         specifier: workspace:*
         version: link:../../packages/pi-trace
     devDependencies:
@@ -24,25 +24,12 @@ importers:
         specifier: ^4.19.0
         version: 4.21.0
 
-  examples/with-pi-agent:
-    dependencies:
-      pi-trace:
-        specifier: workspace:*
-        version: link:../../packages/pi-trace
-    devDependencies:
-      '@mariozechner/pi-ai':
-        specifier: ^0.70.5
-        version: 0.70.6(@modelcontextprotocol/sdk@1.29.0(zod@4.4.1))(ws@8.20.0)(zod@4.4.1)
-      tsx:
-        specifier: ^4.19.0
-        version: 4.21.0
-
   examples/with-tools:
     dependencies:
       dotenv:
         specifier: ^16.4.0
         version: 16.6.1
-      pi-trace:
+      pi-tracing:
         specifier: workspace:*
         version: link:../../packages/pi-trace
     devDependencies:
