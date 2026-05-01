@@ -11,6 +11,10 @@ tracer.serve()
 
 No agent code changes needed. Automatically captures thinking, tool calls, and LLM turns, then serves a live web dashboard.
 
+https://github.com/user-attachments/assets/ec5ef514-457e-43e4-8641-1e85b4c6c789
+
+
+
 ## Quick Start
 
 ```bash
