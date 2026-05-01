@@ -1,5 +1,5 @@
 /**
- * pi-trace basic example
+ * pi-tracing basic example
  *
  * 演示 createTracer 的最小接入方式。
  * 运行后打开 http://localhost:3333 查看实时事件流。
@@ -7,7 +7,7 @@
 
 import { registerFauxProvider, fauxAssistantMessage } from "@mariozechner/pi-ai"
 import { Agent } from "@mariozechner/pi-agent-core"
-import { createTracer } from "pi-trace"
+import { createTracer } from "pi-tracing"
 
 // 1. 创建假 LLM（不需要真实 API key）
 const faux = registerFauxProvider()
@@ -17,7 +17,7 @@ faux.setResponses([
 
 const agent = new Agent({ initialState: { model: faux.getModel() } })
 
-// 2. 一行接入 pi-trace（collector 自动开始采集）
+// 2. 一行接入 pi-tracing（collector 自动开始采集）
 const tracer = createTracer(agent)
 
 // 3. 启动 Web 调试界面（自动打开浏览器）

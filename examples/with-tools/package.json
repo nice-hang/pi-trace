@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "dotenv": "^16.4.0",
-    "pi-trace": "workspace:*"
+    "pi-tracing": "workspace:*"
   },
   "devDependencies": {
     "@mariozechner/pi-ai": "^0.70.5",

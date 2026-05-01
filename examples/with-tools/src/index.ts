@@ -2,7 +2,7 @@ import "dotenv/config"
 import { createInterface } from "node:readline/promises"
 import { getModel } from "@mariozechner/pi-ai"
 import { Agent } from "@mariozechner/pi-agent-core"
-import { createTracer } from "pi-trace"
+import { createTracer } from "pi-tracing"
 import { bashTool, fetchTool } from "./tools.js"
 
 if (!process.env.LLM_API_KEY) {

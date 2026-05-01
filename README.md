@@ -1,145 +1,119 @@
-# pi-trace
+# pi-tracing
 
-Agent 调试工具包。
+Real-time observability for [pi-agent](https://github.com/mariozechner/pi-agent-core) agents.
 
-通过 `Agent.subscribe()` 接入 pi-agent 事件流，提供控制台实时输出、JSON 文件导出、CLI 回放等调试能力。
+Hooks into `Agent.subscribe()` with zero code changes — captures thinking, tool calls, and LLM turns into structured data, then serves a live web dashboard.
 
-## 安装
+```typescript
+createTracer(agent).serve()
+```
+
+## Install
 
 ```bash
-npm install pi-trace
+npm install pi-tracing
 ```
 
-## 快速开始
+## Quick Start
 
 ```typescript
-import { Agent } from "@mariozechner/pi-agent-core";
-import { createTracer, consoleAdapter } from "pi-trace";
+import { Agent } from "@mariozechner/pi-agent-core"
+import { createTracer } from "pi-tracing"
 
-const agent = new Agent(/* ... */);
+const agent = new Agent({ /* ... */ })
+const tracer = createTracer(agent)
+tracer.serve()
 
-const tracer = createTracer(agent, {
-  adapters: [consoleAdapter({ showTimestamps: true })],
-});
-
-await agent.prompt("写一个排序算法");
-tracer.printSummary();
-// → Turn 1: 2.1s, $0.005 (127→45 tokens)
+await agent.prompt("What is the capital of France?")
 ```
 
-## 特性
+Open `http://localhost:3333` — the dashboard shows sessions, traces, LLM calls, tool calls, and thinking blocks in a resizable three-panel layout.
 
-- **零侵入集成** — 不修改 pi-agent-core 代码，通过 `subscribe()` 接入
-- **控制台实时输出** — 带颜色的 Agent 事件流
-- **JSON 文件导出** — Agent run 完成后导出结构化 Trace
-- **CLI 回放** — 按原始时间间隔重放 Trace 事件
-- **统计聚合** — Turn、LLM 调用、Tool 调用、Cost 自动统计
+## Features
 
-## 使用方式
+- **Zero-instrumentation** — plugs in via `Agent.subscribe()`, no agent code changes
+- **Real-time streaming** — SSE pushes live traces to the dashboard as they happen
+- **Resizable three-panel UI** — session list, trace tree, detail inspector with drag handles
+- **Rich content rendering** — Markdown, collapsible thinking blocks, tool call JSON with syntax highlighting
+- **Structured trace data** — LLM calls (messages, tokens, cost), tool calls (args, results), system events
+- **Theme support** — light/dark toggle, persists preference
+- **Session management** — multi-session history, grouped by conversation
 
-### 控制台输出
-
-```typescript
-import { createTracer, consoleAdapter } from "pi-trace";
-
-createTracer(agent, {
-  adapters: [consoleAdapter({ showTimestamps: true, showCost: true })],
-});
-```
+## Architecture
 
 ```
-━━━ Agent Run ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[16:00:01.123] agent_start
-[16:00:01.124] turn_start #1
-[16:00:01.250] message_start assistant  (LLM call)
-[16:00:03.450] tool_execution_start readFile
-[16:00:03.520] tool_execution_end   readFile  (70ms) ✓
-[16:00:03.521] message_end assistant  tokens=127→45  cost=$0.003
-[16:00:05.600] turn_end #1  2.4s
-━━━ Summary ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Turns:      1
-LLM calls:  1
-Tool calls: 1 (readFile)
-Duration:   4.2s
-Cost:       $0.008 (327 in → 89 out)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Agent events ──▶ Collector ──▶ TracerServer ──▶ Dashboard (SSE)
+                   │               │
+               Session/Trace    /api/sessions
+               Round/Item      Static UI (React 19 + shadcn/ui)
 ```
 
-### 文件导出
+**Data model:** `Session ▶ Trace ▶ Round ▶ {LlmCall | ToolCall | SystemMessage}`
 
-```typescript
-import { createTracer, fileAdapter } from "pi-trace";
-
-createTracer(agent, {
-  adapters: [fileAdapter({ dir: "./traces" })],
-});
-// → ./traces/trace-1714521600123-claude-sonnet-4.json
-```
-
-### 自定义 Adapter
-
-```typescript
-createTracer(agent, {
-  adapters: [{
-    onEvent(event, { agent }) {
-      if (event.type === "tool_execution_end") {
-        console.log(`Tool ${event.data.toolName} took ${event.data.duration}ms`);
-      }
-    },
-    onTraceComplete(trace) {
-      console.log(`Cost: $${trace.totals.cost}`);
-    },
-  }],
-});
-```
-
-### CLI 回放
-
-```bash
-npx pi-trace replay ./trace-xxx.json
-npx pi-trace replay ./trace-xxx.json --speed 2
-```
+Each level preserves the full decision chain — thinking content, tool inputs and results, token usage, and cost.
 
 ## API
 
-### `createTracer(agent, options)`
+### `createTracer(agent, options?)`
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `agent` | `Agent` | pi-agent 实例 |
-| `options.adapters` | `DebugAdapter[]` | 一个或多个 adapter |
-| `options.maxEvents` | `number` | 最大事件数，默认 10000 |
-| `options.recordMessages` | `boolean` | 是否记录完整 messages |
 
-### `consoleAdapter(options?)`
+| Param               | Type     | Default | Description                |
+| ------------------- | -------- | ------- | -------------------------- |
+| `agent`             | `Agent`  | —       | pi-agent instance          |
+| `options.port`      | `number` | `3333`  | Web UI port                |
+| `options.sessionId` | `string` | auto    | Custom session identifier  |
+| `options.metadata`  | `object` | —       | Attach metadata to session |
 
-| 选项 | 类型 | 默认值 |
-|------|------|--------|
-| `showTimestamps` | `boolean` | `true` |
-| `showCost` | `boolean` | `true` |
-| `eventFilter` | `string[]` | 全部事件 |
 
-### `fileAdapter(options)`
+Returns a `Tracer` with `serve()` and `newSession()`.
 
-| 选项 | 类型 | 说明 |
-|------|------|------|
-| `dir` | `string` | 输出目录，必填 |
+### `computeStats(trace)`
 
-## 设计原则
+Returns aggregated metrics: turns, LLM/tool call counts, total cost, token usage, average round duration.
 
-- **核心最小，扩展分离** — 调试逻辑不在 agent 核心内，通过 `subscribe()` 接入
-- **每一层只做一件事** — Collector 采集，Adapter 输出，互不耦合
-- **错误是数据不是控制流** — 初始化/写入失败不影响 Agent 运行
-- **YAGNI** — v0.1 只做控制台输出和 JSON 导出
+### Trace Adapter
 
-## 四步实现路线图
+Collector accepts custom `TraceAdapter` for integration with external observability pipelines:
 
-| Step | 内容 | 关键交付 |
-|------|------|----------|
-| **Step 1** | 脚手架 + 核心模块 | monorepo 搭建，Trace 类型，Collector，Stats |
-| **Step 2** | Adapter | Console 实时输出，File JSON 导出 |
-| **Step 3** | CLI | `pi-trace replay` 回放工具 |
-| **Step 4** | 完善 | 示例项目，README，CI |
+```typescript
+const collector = new Collector(agent, {
+  adapters: [{
+    onEvent(event) { /* raw agent events */ },
+    onTraceComplete(trace) { /* finalized trace */ },
+    onTraceProgress(trace) { /* partial trace during streaming */ },
+    onSessionComplete(session) { /* finalized session */ },
+  }]
+})
+```
+
+## Examples
+
+```bash
+# basic — simple prompt with faux LLM
+npm -w examples/basic run example
+
+# with-tools — real LLM + bash/fetch tools
+export ANTHROPIC_API_KEY=sk-...
+npm -w examples/with-tools run example "what time is it"
+```
+
+## Design
+
+- **Core minimal, extension separate** — debugging never pollutes agent internals
+- **Single responsibility** — Collector captures, Server serves, UI renders
+- **Errors are data** — adapter failures never break the agent
+- **SSE over WebSocket** — unidirectional push, auto-reconnect, zero dependencies
+- **Node http over Express** — two routes don't need a framework
+- **Preact → React 19** — migrated for richer component ecosystem (shadcn/ui)
+
+## Changelog
+
+Generated from conventional commits via [git-cliff](https://git-cliff.org):
+
+```bash
+pnpm changelog          # full changelog
+pnpm changelog:unreleased  # unreleased changes only
+```
 
 ## License
 

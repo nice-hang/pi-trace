@@ -9,7 +9,7 @@
 ## Project
 - Monorepo with npm workspaces
 - Package manager: npm
-- Core package: `pi-trace` in `packages/pi-trace/`
+- Core package: `pi-tracing` in `packages/pi-trace/`
 - Testing: vitest
 - Formatting/linting: biome
 

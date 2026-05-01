@@ -1,5 +1,5 @@
 {
-	"name": "pi-trace",
+	"name": "pi-tracing",
 	"version": "0.1.0",
 	"type": "module",
 	"main": "./dist/index.js",
@@ -7,9 +7,9 @@
 	"exports": {
 		".": "./dist/index.js"
 	},
-	"files": ["dist", "README.md"],
+	"files": ["dist", "ui/dist", "README.md"],
 	"scripts": {
-		"build": "tsc -p tsconfig.build.json",
+		"build": "tsc -p tsconfig.build.json && cd ui && pnpm build",
 		"test": "vitest run",
 		"clean": "rm -rf dist"
 	},

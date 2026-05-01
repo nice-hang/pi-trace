@@ -97,7 +97,7 @@ export class TracerServer {
         })
 
         server.listen(this.port, () => {
-            console.log(`\n  pi-trace → http://localhost:${this.port}\n`)
+            console.log(`\n  pi-tracing → http://localhost:${this.port}\n`)
         })
 
         setTimeout(() => exec(`open http://localhost:${this.port}`), 300)
