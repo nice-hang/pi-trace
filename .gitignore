@@ -2,4 +2,7 @@ node_modules/
 dist/
 .trace/
 *.log
-docs
+docs/*.md
+docs/superpowers/
+.env
+.superpowers/

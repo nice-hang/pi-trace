@@ -1,48 +1,53 @@
-import type { Trace } from "./types.js";
+import type { Trace } from "./types.js"
 
 export interface StatsSummary {
-	totalTurns: number
-	totalLlmCalls: number
-	totalToolCalls: number
-	totalCost: number
-	totalDuration: number
-	totalInputTokens: number
-	totalOutputTokens: number
-	toolCallCounts: Record<string, number>
-	averageTurnDuration: number
-	averageCostPerTurn: number
+    totalRounds: number
+    totalLlmCalls: number
+    totalToolCalls: number
+    totalCost: number
+    totalDuration: number
+    totalInputTokens: number
+    totalOutputTokens: number
+    toolCallCounts: Record<string, number>
+    averageRoundDuration: number
+    averageCostPerRound: number
 }
 
 export function computeStats(trace: Trace): StatsSummary {
-	const toolCallCounts: Record<string, number> = {}
+    const toolCallCounts: Record<string, number> = {}
+    let totalLlmCalls = 0
+    let totalToolCalls = 0
+    let totalCost = 0
+    let totalInputTokens = 0
+    let totalOutputTokens = 0
+    let totalRoundDuration = 0
 
-	for (const turn of trace.turns) {
-		for (const tc of turn.toolCalls) {
-			toolCallCounts[tc.name] = (toolCallCounts[tc.name] ?? 0) + 1
-		}
-	}
+    for (const round of trace.rounds) {
+        totalRoundDuration += round.endTime - round.startTime
+        for (const item of round.items) {
+            if (item.type === "llm") {
+                totalLlmCalls++
+                totalCost += item.cost
+                totalInputTokens += item.tokens.input
+                totalOutputTokens += item.tokens.output
+            } else if (item.type === "tool") {
+                totalToolCalls++
+                toolCallCounts[item.name] = (toolCallCounts[item.name] ?? 0) + 1
+            }
+        }
+    }
 
-	const turnCount = trace.turns.length
-	const avgTurnDuration =
-		turnCount > 0
-			? trace.turns.reduce((sum, t) => sum + (t.endTime - t.startTime), 0) / turnCount
-			: 0
-
-	const avgCostPerTurn =
-		turnCount > 0
-			? trace.turns.reduce((sum, t) => sum + t.cost, 0) / turnCount
-			: 0
-
-	return {
-		totalTurns: trace.turns.length,
-		totalLlmCalls: trace.turns.reduce((sum, t) => sum + (t.messages.filter(m => m.role === "assistant").length), 0),
-		totalToolCalls: trace.turns.reduce((sum, t) => sum + t.toolCalls.length, 0),
-		totalCost: trace.turns.reduce((sum, t) => sum + t.cost, 0),
-		totalDuration: trace.endTime - trace.startTime,
-		totalInputTokens: trace.turns.reduce((sum, t) => sum + t.inputTokens, 0),
-		totalOutputTokens: trace.turns.reduce((sum, t) => sum + t.outputTokens, 0),
-		toolCallCounts,
-		averageTurnDuration: avgTurnDuration,
-		averageCostPerTurn: avgCostPerTurn,
-	}
+    const roundCount = trace.rounds.length
+    return {
+        totalRounds: roundCount,
+        totalLlmCalls,
+        totalToolCalls,
+        totalCost,
+        totalDuration: trace.endTime - trace.startTime,
+        totalInputTokens,
+        totalOutputTokens,
+        toolCallCounts,
+        averageRoundDuration: roundCount > 0 ? totalRoundDuration / roundCount : 0,
+        averageCostPerRound: roundCount > 0 ? totalCost / roundCount : 0,
+    }
 }

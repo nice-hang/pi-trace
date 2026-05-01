@@ -1,10 +1,9 @@
 {
 	"name": "pi-trace-workspace",
 	"private": true,
-	"workspaces": ["packages/*", "examples/*"],
 	"scripts": {
-		"build": "npm -w packages/pi-trace run build",
-		"test": "npm -w packages/pi-trace run test",
+		"build": "pnpm --filter pi-trace build",
+		"test": "pnpm --filter pi-trace test",
 		"check": "biome check ."
 	}
 }

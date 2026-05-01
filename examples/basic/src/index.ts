@@ -20,10 +20,12 @@ const agent = new Agent({ initialState: { model: faux.getModel() } })
 // 2. 一行接入 pi-trace（collector 自动开始采集）
 const tracer = createTracer(agent)
 
-// 3. 运行 agent
-await agent.prompt("What is the capital of France?")
-
-// 4. 启动 Web 调试界面（自动打开浏览器）
+// 3. 启动 Web 调试界面（自动打开浏览器）
+// 必须先 serve()，这样 prompt() 时的事件才能实时推送到浏览器
 tracer.serve()
 
+// 4. 运行 agent — 打开浏览器看实时事件流
+await agent.prompt("What is the capital of France?")
+
+console.log("Done! Check the browser for event trace.")
 faux.unregister()
